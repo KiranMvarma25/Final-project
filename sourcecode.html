@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Source Code</title>
+</head>
+<body>
+<p style="margin-left:150px">
+
+#include SoftwareSerial.h
+<br>
+#include String.h
+<br>
+const int AOUTpin=0;
+<br>
+const int DOUTpin=8;
+<br>
+const int ledPin=13;
+<br>
+const int trigPin = 9;
+<br>
+const int echoPin = 10;
+<br>
+const int buzzerPin = 1;
+<br>
+const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+<br>
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+<br>
+long duration;
+<br>
+int distance;
+<br>
+long distancemm;
+<br>
+int limit;
+<br>
+int value;
+<br>
+SoftwareSerial GSMserial(7, 8);
+<br>
+int num[10];
+<br>
+unsigned char text[300];
+<br>
+char mess[300];
+<br>
+char choice;
+<br>
+String message = "";
+<br>
+String phone = "";
+<br>
+String received = "";
+<br>
+String str= "";
+<br>
+int count = 0;
+<br>
+int i = 0;
+<br>
+boolean light = true;
+<br>
+int relayPin = 13;
+<br>
+void setup()
+<br>
+{
+<br>
+ Serial.begin(9600);
+<br>
+ GSMserial.begin(19200);
+<br>
+ pinMode(relayPin, OUTPUT);
+<br>
+Serial.begin(115200);
+<br>
+pinMode(DOUTpin, INPUT);
+<br>
+pinMode(ledPin, OUTPUT);
+<br>
+lcd.begin(16, 2);
+<br>
+pinMode(trigPin, OUTPUT);
+<br>
+pinMode(echoPin, INPUT);
+<br>
+pinMode(buzzerPin, OUTPUT);
+<br>
+Serial.begin(9600);
+<br>
+}
+<br>
+void loop()
+<br>
+{
+<br>
+lcd.setCursor(0, 1);
+<br>
+digitalWrite(trigPin, LOW);
+<br>
+delayMicroseconds(2);
+<br>
+digitalWrite(trigPin, HIGH);
+<br>
+delayMicroseconds(10);
+<br>
+digitalWrite(trigPin, LOW);
+<br>
+duration = pulseIn(echoPin, HIGH);
+<br>
+distance= duration*0.034/2;
+<br>
+distancemm = distance*10+30;
+<br>
+if (distancemm <= 50)
+<br>
+{
+<br>
+for (int i=0; i <= 50; i++){
+<br>
+ digitalWrite(buzzerPin, HIGH);
+<br>
+ delay(10);
+<br>
+ }
+<br>
+}
+<br>
+else if (distancemm >= 121)
+<br>
+{
+<br>
+ digitalWrite(buzzerPin, LOW);
+<br>
+}
+<br>
+else
+<br>
+{
+<br>
+ //digitalWrite(buzzerPin, HIGH);
+<br>
+}
+<br>
+// Prints the distance on the Serial Monitor
+<br>
+Serial.print("Distance: ");
+<br>
+Serial.println(distance);
+<br>
+Serial.print("Distance: ");
+<br>
+Serial.print(distancemm);
+<br>
+Serial.println("mm");
+<br>
+delay(250);
+}
+<br>
+value= analogRead(AOUTpin);
+<br>
+limit= digitalRead(DOUTpin);
+<br>
+Serial.print("Alcohol value: ");
+<br>
+Serial.println(value);
+<br>
+Serial.print("Limit: ");
+<br>
+Serial.print(limit);//prints the limit reached
+<br>
+delay(100);
+<br>
+if (limit == HIGH){
+<br>
+digitalWrite(ledPin, HIGH);//if limit has been reached, LED turns on as status indicator
+<br>
+lcd.print("alcohol detected");
+<br>
+}
+<br>
+else{
+<br>
+digitalWrite(ledPin, LOW);//if threshold not reached, LED remains off
+<br>
+lcd.print("normal");
+<br>
+lcd.print(millis( ) / 1000);
+<br>
+}
+<br>
+}
+
+<br>
+if(GSMserial.available()) // if date is comming from softwareserial port ==> data is
+comm
+<br>
+ing from GSMserial shield
+<br>
+{
+<br>
+ while(GSMserial.available()) // reading data into char array
+<br>
+ {
+
+<br>
+ text[count]=GSMserial.read(); // writing data into array
+
+<br>
+ if(text[count] == '"') i++;
+<br>
+ if(i >= 6 && text[count] != '"')
+<br>
+ {
+
+<br>
+ if((char)text[count] == '+') light = true;
+<br>
+ if((char)text[count] == '-') light = false;
+<br>
+ received += (char)text[count];
+<br>
+ }
+<br>
+<br> if(count == 300)break;
+ cou
+<br>
+nt++;
+<br>
+ }
+ <br>
+Serial.println(received);
+<br>
+ Serial.println(light);
+<br>
+ digitalWrite(relayPin, light);
+<br>
+ received = "";
+<br> Serial.write(text,count); // if no data transmission ends, write text to hardware serial port
+ cleartextArray(); 
+<br>
+// call cleartextArray function to clear the storaged data from the array
+<br>
+ count = 0; // set counter of while loop to zero
+<br>
+ i = 0;
+<br>
+}
+<br>
+if (Serial.available())
+<br>
+{
+<br>
+ while(Serial.available()) // reading data into char array
+<br>
+ {
+<br>
+ text[count]=Serial.read();
+<br>
+ if(text[count] == '~')
+<br>
+ {
+<br>
+ text[count]=NULL; Serial.flush(); count = 0; function();
+<br>
+ }
+<br>
+ count++;
+<br>
+ if(count == 300)break;
+<br>
+}
+<br>
+ GSMserial.write(text,count); // if no data transmission ends, write text to hardware serial
+port
+<br>
+ cleartextArray(); // call cleartextArray function to clear the storaged data from the array
+ count = 0; // set counter of while loop to zero
+<br>
+}
+<br>
+}
+<br>
+void function()
+<br>
+{
+<br>
+int bytes_read = 0;
+<br>
+Serial.print("Send Text(s) or Exit(x): ");
+<br>
+while(bytes_read < 1)
+<br>
+{
+<br>
+ if(Serial.available() > 0)
+<br>
+ {
+<br>
+ choice = Serial.read();
+<br>
+ }
+<br>
+ switch(choice)
+<br>
+ {
+<br>
+ case 's': Serial.println(choice); bytes_read++; choice = ' '; SendTextMessage();
+<br>
+ break;
+<br>
+ case 'x': Serial.println("AT COMMAND MODE"); bytes_read++;
+<br>
+ break;
+<br>
+ bytes_read++;
+<br>
+ }
+<br>
+ choice = ' ';
+<br>
+}
+<br>
+}
+<br>
+void setNumber()
+<br>
+{
+<br>
+Serial.print("Enter Phone Number: ");
+<br>
+int bytes_read = 0;
+<br>
+while (bytes_read < 10) //amount of numbers to read - corresponds to array decleration and
+<br>
+print loop
+<br>
+{
+<br>
+ if(Serial.available()>0)
+<br>
+ {
+<br>
+ num[bytes_read] = Serial.read() - 48; //its adds 48 to it? i dont know
+<br>
+ phone += num[bytes_read];
+<br>
+ bytes_read ++;
+<br>
+ }
+<br>
+}
+<br>
+}
+<br>
+void printNumber()
+<br>
+{
+<br>
+Serial.println(phone);
+<br>
+}
+<br>
+void setMessage()
+<br>
+{
+<br>
+Serial.print("Type Message: ");
+<br>
+int bytes_read = 0;
+<br>
+boolean done = false;
+<br>
+while (done == false) //amount of numbers to read - corresponds to array decleration and print
+<br>
+loop
+<br>
+{
+<br>
+ //Serial.println("message"); //debug
+<br>
+ if (Serial.available() > 0)
+<br>
+ {
+<br>
+ mess[bytes_read] = Serial.read();
+<br>
+ if(mess[bytes_read] == '~')
+<br>
+ {
+<br>
+ done = true;
+<br>
+ }
+<br>
+ if(mess[bytes_read] != '~')
+<br>
+ {
+<br>
+ message += mess[bytes_read];
+<br>
+ }
+<br>
+ bytes_read ++;
+<br>
+ }
+<br>
+}
+<br>
+}
+<br>
+void printMessage()
+
+<br>
+{
+<br>
+for(int i = 0; i < 300; i++)
+<br>
+if(mess[i] != '~')
+<br>
+{
+<br>
+ Serial.print(mess[i]);
+<br>
+}
+<br>
+Serial.println(" ");
+<br>
+}
+<br>
+void SendTextMessage()
+<br>
+{
+<br>
+ setNumber();
+<br>
+ printNumber();
+<br>
+ setMessage();
+<br>
+ printMessage();
+<br>
+ GSMserial.println("AT+CMGF=1"); //Because we want to send the SMS in text mode
+<br>
+ delay(100);
+<br>
+ String str = "";
+<br>
+ str += "AT+CMGS = \"+1";
+<br>
+ str += phone;
+<br>
+ str += "\"";
+<br>
+ GSMserial.println(str);
+<br>
+ delay(100);
+<br>
+ GSMserial.println(message); //the content of the message
+<br>
+ delay(150);
+<br>
+ GSMserial.println((char)26); //the ASCII code of the ctrl+z is 26
+<br>
+ delay(200);
+<br>
+ Serial.println("Message Sent!");
+<br>
+ phone = "";
+<br>
+ message = "";
+<br>
+ clearMessage();
+<br>
+ Serial.flush();
+<br>
+ GSMserial.flush();
+<br>
+}
+<br>
+void cleartextArray() // function to clear text array
+<br>
+{
+<br>
+for (int i=0; i<300;i++)
+<br>
+ { text[i]=NULL;} // clear all index of array with command NULL
+<br>
+}
+<br>
+void clearMessage()
+<br>
+{
+<br>
+for (int i=0; i<300;i++)
+<br>
+ { mess[i]=NULL;}
+<br>
+}
+<br>
+}
+<br>
+</p>
+<br>
+
+
+</body>
+</html>
